@@ -567,36 +567,25 @@ namespace SIT.Core.Coop.Components
 
                     case 3:
                         // Calculate the width of the "AI Amount" text
-                        var diffLabelWidth = GUI.skin.label.CalcSize(new GUIContent(StayInTarkovPlugin.LanguageDictionary["AI_AMOUNT"])).x;
+                        var botAmountLabelWidth = GUI.skin.label.CalcSize(new GUIContent(StayInTarkovPlugin.LanguageDictionary["AI_AMOUNT"])).x;
 
                         // Calculate the position for the checkbox and text to center-align them
-                        var diffhorizontal = 10;
-                        var diffcheckbox = halfWindowWidth - diffLabelWidth / 2 - diffhorizontal;
-                        var difftext = diffcheckbox + 20;
+                        var botAhorizontal = 10;
+                        var botAcheckbox = halfWindowWidth - botAmountLabelWidth / 2 - botAhorizontal;
+                        var botAtext = botAcheckbox + 20;
 
                         // Disable the checkbox to prevent interaction
                         GUI.enabled = true;
 
-                        // Checkbox to toggle the password field visibility
-                        showBotAmountField = GUI.Toggle(new UnityEngine.Rect(diffcheckbox, y, 200, 25), showBotAmountField, "");
+                        // Checkbox to toggle the AI Amount SelectionGrid visibility
+                        showBotAmountField = GUI.Toggle(new UnityEngine.Rect(botAcheckbox, y, 200, 25), showBotAmountField, "");
 
-                        // "Require Password" text
-                        GUI.Label(new UnityEngine.Rect(difftext, y, diffLabelWidth, 25), StayInTarkovPlugin.LanguageDictionary["AI_AMOUNT"]);
-
-                        // Feature is currently unavailable
-                        var difficultyStyle = new GUIStyle(GUI.skin.label)
-                        {
-                            fontStyle = FontStyle.Bold,
-                            normal = { textColor = Color.gray },
-                            fontSize = 10
-                        };
+                        // "AI Amount" text
+                        GUI.Label(new UnityEngine.Rect(botAcheckbox, y, botAmountLabelWidth, 25), StayInTarkovPlugin.LanguageDictionary["AI_AMOUNT"]);
 
 
                         // Reset GUI.enabled to enable other elements
                         GUI.enabled = true;
-
-                        var difficultyFieldWidth = 40;
-                        var difficultyX = halfWindowWidth - difficultyFieldWidth / 2;
 
                         var botAmountFieldWidth = 350;
                         var botAmountX = halfWindowWidth - botAmountFieldWidth / 2;
