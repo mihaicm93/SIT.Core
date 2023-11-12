@@ -601,7 +601,7 @@ namespace SIT.Core.Coop.Components
                         var botAmountFieldWidth = 350;
                         var botAmountX = halfWindowWidth - botAmountFieldWidth / 2;
 
-                        if (ShowBotAmountField)
+                        if (showBotAmountField)
                         {
                             y += 20;
                             //botAmountInput = GUI.TextField(new UnityEngine.Rect), botAmountInput, 25);
