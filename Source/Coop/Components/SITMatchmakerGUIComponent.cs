@@ -1,5 +1,7 @@
 ﻿using BepInEx.Logging;
 using EFT;
+using EFT.Bots;
+using EFT.Interactive;
 using EFT.UI;
 using EFT.UI.Matchmaker;
 using Newtonsoft.Json.Linq;
@@ -20,8 +22,8 @@ namespace SIT.Core.Coop.Components
 {
     internal class SITMatchmakerGUIComponent : MonoBehaviour
     {
-        private UnityEngine.Rect windowRect = new (20, 20, 120, 50);
-        private UnityEngine.Rect windowInnerRect { get; set; } = new (20, 20, 120, 50);
+        private UnityEngine.Rect windowRect = new(20, 20, 120, 50);
+        private UnityEngine.Rect windowInnerRect { get; set; } = new(20, 20, 120, 50);
         private GUIStyle styleBrowserRaidLabel { get; } = new GUIStyle();
         private GUIStyle styleBrowserRaidRow { get; } = new GUIStyle() { };
         private GUIStyle styleBrowserRaidLink { get; } = new GUIStyle();
@@ -45,10 +47,13 @@ namespace SIT.Core.Coop.Components
         private CancellationTokenSource m_cancellationTokenSource;
 
         private bool StopAllTasks = false;
-        
+
         private bool showPasswordField = false;
- 
+        private bool showBotAmountField = true;
+
         private string passwordInput = "";
+        public int botAmountInput = 0;
+        public string[] botAmountOptions = new string[] { "AsOnline", "Low", "Medium", "High", "NoBots" };
 
         private const float verticalSpacing = 10f;
 
@@ -305,7 +310,7 @@ namespace SIT.Core.Coop.Components
             }
         }
 
-       
+
 
         string ErrorMessage { get; set; }
 
@@ -318,9 +323,9 @@ namespace SIT.Core.Coop.Components
             if (!showErrorMessageWindow)
                 return;
 
-            GUI.Label(new UnityEngine.Rect(20,20,1000,1000), ErrorMessage);
+            GUI.Label(new UnityEngine.Rect(20, 20, 1000, 1000), ErrorMessage);
 
-            if(GUI.Button(new UnityEngine.Rect(20, windowInnerRect.height - 90, windowInnerRect.width - 40, 45), "Close"))
+            if (GUI.Button(new UnityEngine.Rect(20, windowInnerRect.height - 90, windowInnerRect.width - 40, 45), "Close"))
             {
                 showErrorMessageWindow = false;
                 showServerBrowserWindow = true;
@@ -348,7 +353,7 @@ namespace SIT.Core.Coop.Components
             string[] columnLabels = {
                 StayInTarkovPlugin.LanguageDictionary["SERVER"]
                 , StayInTarkovPlugin.LanguageDictionary["PLAYERS"]
-                , StayInTarkovPlugin.LanguageDictionary["LOCATION"] 
+                , StayInTarkovPlugin.LanguageDictionary["LOCATION"]
                 , StayInTarkovPlugin.LanguageDictionary["PASSWORD"]
             };
 
@@ -468,7 +473,7 @@ namespace SIT.Core.Coop.Components
 
         void DrawHostGameWindow(int windowID)
         {
-            var rows = 3;
+            var rows = 4;
             var halfWindowWidth = windowInnerRect.width / 2;
 
             // Define a style for the title label
@@ -485,7 +490,7 @@ namespace SIT.Core.Coop.Components
 
             for (var iRow = 0; iRow < rows; iRow++)
             {
-                var y = 40 + (iRow * 50);
+                var y = 30 + (iRow * 50);
 
                 switch (iRow)
                 {
@@ -553,14 +558,80 @@ namespace SIT.Core.Coop.Components
 
                         if (showPasswordField)
                         {
-                            passwordInput = GUI.PasswordField(new UnityEngine.Rect(220, y, 200, 30), passwordInput, '*', 25);
                             y += 30;
+                            passwordInput = GUI.PasswordField(new UnityEngine.Rect(220, y, 200, 30), passwordInput, '*', 25);
+
                         }
 
                         break;
 
+                    case 3:
+                        // Calculate the width of the "AI Amount" text
+                        var diffLabelWidth = GUI.skin.label.CalcSize(new GUIContent(StayInTarkovPlugin.LanguageDictionary["AI_AMOUNT"])).x;
 
+                        // Calculate the position for the checkbox and text to center-align them
+                        var diffhorizontal = 10;
+                        var diffcheckbox = halfWindowWidth - diffLabelWidth / 2 - diffhorizontal;
+                        var difftext = diffcheckbox + 20;
+
+                        // Disable the checkbox to prevent interaction
+                        GUI.enabled = true;
+
+                        // Checkbox to toggle the password field visibility
+                        showBotAmountField = GUI.Toggle(new UnityEngine.Rect(diffcheckbox, y, 200, 25), showBotAmountField, "");
+
+                        // "Require Password" text
+                        GUI.Label(new UnityEngine.Rect(difftext, y, diffLabelWidth, 25), StayInTarkovPlugin.LanguageDictionary["AI_AMOUNT"]);
+
+                        // Feature is currently unavailable
+                        var difficultyStyle = new GUIStyle(GUI.skin.label)
+                        {
+                            fontStyle = FontStyle.Bold,
+                            normal = { textColor = Color.gray },
+                            fontSize = 10
+                        };
+
+
+                        // Reset GUI.enabled to enable other elements
+                        GUI.enabled = true;
+
+                        var difficultyFieldWidth = 40;
+                        var difficultyX = halfWindowWidth - difficultyFieldWidth / 2;
+
+                        var botAmountFieldWidth = 350;
+                        var botAmountX = halfWindowWidth - botAmountFieldWidth / 2;
+
+                        if (ShowBotAmountField)
+                        {
+                            y += 20;
+                            //botAmountInput = GUI.TextField(new UnityEngine.Rect), botAmountInput, 25);
+                            Rect botAmountGridRect = new Rect(botAmountX, y, botAmountOptions.Count() * 75, 25);
+
+                            botAmountInput = GUI.SelectionGrid(botAmountGridRect, botAmountInput, botAmountOptions, 5);
+
+                        }
+
+                        break;
                 }
+            }
+
+            EFT.Bots.EBotAmount botAmountInputProc(int id)
+            {
+                switch (id)
+                {
+                    case 0:
+                        return EBotAmount.AsOnline;
+                    case 1:
+                        return EBotAmount.Low;
+                    case 2:
+                        return EBotAmount.Medium;
+                    case 3:
+                        return EBotAmount.High;
+                    case 4:
+                        return EBotAmount.NoBots;
+                    default:
+                        return EBotAmount.AsOnline;
+                } 
             }
 
             // Style for back and start button
@@ -581,6 +652,7 @@ namespace SIT.Core.Coop.Components
                 AkiBackendCommunication.Instance.WebSocketCreate(MatchmakerAcceptPatches.Profile);
 
                 FixesHideoutMusclePain();
+                RaidSettings.BotSettings.BotAmount = botAmountInputProc(botAmountInput);
                 MatchmakerAcceptPatches.CreateMatch(MatchmakerAcceptPatches.Profile.ProfileId, RaidSettings);
                 OriginalAcceptButton.OnClick.Invoke();
                 DestroyThis();

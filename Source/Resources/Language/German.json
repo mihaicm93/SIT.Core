@@ -11,6 +11,8 @@
   "START": "Start",
   "NUMBER_OF_PLAYERS_TO_WAIT_FOR_MESSAGE": "Number of Players to Wait For (Including You)",
   "REQUIRE_PASSWORD": "Require Password",
-  "PASSWORD": "Password"
+  "PASSWORD": "Password",
+  "AI_AMOUNT": "AI Amount"
+
 
 }

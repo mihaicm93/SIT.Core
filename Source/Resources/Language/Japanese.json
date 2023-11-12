@@ -11,5 +11,6 @@
   "START": "開始",
   "NUMBER_OF_PLAYERS_TO_WAIT_FOR_MESSAGE": "待機する全プレイヤーの数 (自分を含む)",
   "REQUIRE_PASSWORD": "暗証番号が必要です",
-  "PASSWORD": "暗証番号"
+  "PASSWORD": "暗証番号",
+  "AI_AMOUNT": "AI Amount"
 }
