@@ -38,6 +38,7 @@ namespace SIT.Core.Coop
         private AkiBackendCommunication RequestingObj { get; set; }
         public SITConfig SITConfig { get; private set; } = new SITConfig();
         public string ServerId { get; set; } = null;
+        public long Timestamp { get; set; } = 0;
 
         public EFT.Player OwnPlayer { get; set; }
 
@@ -1087,178 +1088,6 @@ namespace SIT.Core.Coop
             });
         }
 
-        public void ProcessLastActionDataPacket(Dictionary<string, object> packet)
-        {
-            if (Singleton<GameWorld>.Instance == null)
-                return;
-
-            if (packet == null || packet.Count == 0)
-            {
-                PatchConstants.Logger.LogInfo("CoopGameComponent:No Data Returned from Last Actions!");
-                return;
-            }
-
-            ProcessPlayerPacket(packet);
-            ProcessWorldPacket(ref packet);
-
-        }
-
-        private void ProcessWorldPacket(ref Dictionary<string, object> packet)
-        {
-            if (packet.ContainsKey("profileId"))
-                return;
-
-            if (!packet.ContainsKey("m"))
-                return;
-
-            foreach (var coopPatch in CoopPatches.NoMRPPatches)
-            {
-                var imrwp = coopPatch as IModuleReplicationWorldPatch;
-                if (imrwp != null)
-                {
-                    if (imrwp.MethodName == packet["m"].ToString())
-                    {
-                        imrwp.Replicated(ref packet);
-                    }
-                }
-            }
-
-            switch (packet["m"].ToString())
-            {
-                case "Door_Interact":
-                    Door_Interact_Patch.Replicated(packet);
-                    break;
-                case "KeycardDoor_Interact":
-                    KeycardDoor_Interact_Patch.Replicated(packet);
-                    break;
-                case "LootableContainer_Interact":
-                    LootableContainer_Interact_Patch.Replicated(packet);
-                    break;
-                case "Switch_Interact":
-                    Switch_Interact_Patch.Replicated(packet);
-                    break;
-                case "Trunk_Interact":
-                    Trunk_Interact_Patch.Replicated(packet);
-                    break;
-                case "WorldInteractiveObject_Interact":
-                    WorldInteractiveObject_Interact_Patch.Replicated(packet);
-                    break;
-            }
-        }
-
-        private List<string> RemovedFromAIPlayers = new();
-
-        private void ProcessPlayerPacket(Dictionary<string, object> packet)
-        {
-            if (packet == null)
-                return;
-
-            if (!packet.ContainsKey("profileId"))
-                return;
-
-            //if (packet["m"].ToString() != "PlayerState")
-            //{
-            //    Logger.LogInfo(packet.ToJson());
-            //}
-
-            var profileId = packet["profileId"].ToString();
-
-            if (Players == null)
-                return;
-
-            if (!Players.Any())
-                return;
-
-            var registeredPlayers = Singleton<GameWorld>.Instance.RegisteredPlayers;
-
-            if (!Players.Any(x => x.Key == profileId) && !registeredPlayers.Any(x => x.ProfileId == profileId))
-            {
-                // Start a new thread that waits for the localplayer to exist to send death events about them
-                if (packet["m"].ToString() == "Kill")
-                {
-                    Logger.LogDebug($"{DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss.fff")}: Received kill packet for null player with ID {profileId}, enqueuing death");
-                    Task.Run(async() => await WaitForPlayerAndProcessPacket(profileId, packet));
-                }
-                return;
-            }
-
-            foreach (var plyr in
-                Players
-                .Where(x => x.Key == profileId)
-                .Where(x => x.Value != null)
-                )
-            {
-                if (plyr.Value.TryGetComponent<PlayerReplicatedComponent>(out var prc))
-                {
-                    prc.ProcessPacket(packet);
-                }
-                else
-                {
-                    Logger.LogError($"Player {profileId} doesn't have a PlayerReplicatedComponent!");
-                }
-
-                if (packet.ContainsKey("Extracted"))
-                {
-                    var coopGame = LocalGameInstance as CoopGame;
-                    if (coopGame != null)
-                    {
-                        //Logger.LogInfo($"Received Extracted ProfileId {packet["profileId"]}");
-                        if (!coopGame.ExtractedPlayers.Contains(packet["profileId"].ToString()))
-                            coopGame.ExtractedPlayers.Add(packet["profileId"].ToString());
-
-                        if (!MatchmakerAcceptPatches.IsClient)
-                        {
-                            var botController = (BotControllerClass)ReflectionHelpers.GetFieldFromTypeByFieldType(typeof(BaseLocalGame<GamePlayerOwner>), typeof(BotControllerClass)).GetValue(this.LocalGameInstance);
-                            if (botController != null)
-                            {
-                                if (!RemovedFromAIPlayers.Contains(plyr.Key))
-                                {
-                                    RemovedFromAIPlayers.Add(plyr.Key);
-                                    Logger.LogDebug("Removing Client Player to Enemy list");
-                                    var botSpawner = (BotSpawner)ReflectionHelpers.GetFieldFromTypeByFieldType(typeof(BotControllerClass), typeof(BotSpawner)).GetValue(botController);
-                                    botSpawner.DeletePlayer(plyr.Value);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-        }
-
-        private async Task WaitForPlayerAndProcessPacket(string profileId, Dictionary<string, object> packet)
-        {
-            // Start the timer.
-            var startTime = DateTime.Now;
-            var maxWaitTime = TimeSpan.FromMinutes(2);
-
-            while (true)
-            {
-                // Check if maximum wait time has been reached.
-                if (DateTime.Now - startTime > maxWaitTime)
-                {
-                    Logger.LogError($"{DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss.fff")}: WaitForPlayerAndProcessPacket waited for {maxWaitTime.TotalMinutes} minutes, but player {profileId} still did not exist after timeout period.");
-                    return;
-                }
-
-                if (Players == null)
-                    continue;
-
-                var registeredPlayers = Singleton<GameWorld>.Instance.RegisteredPlayers;
-
-                // If the player now exists, process the packet and end the thread.
-                if (Players.Any(x => x.Key == profileId) || registeredPlayers.Any(x => x.Profile.ProfileId == profileId))
-                {
-                    // Logger.LogDebug($"{DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss.fff")}: WaitForPlayerAndProcessPacket waited for {(DateTime.Now - startTime).TotalSeconds}s");
-                    ProcessPlayerPacket(packet);
-                    return;
-                }
-
-                // Wait for a short period before checking again.
-                await Task.Delay(1000);
-            }
-        }
-
         private void CreatePlayerStatePacketFromPRC(ref List<Dictionary<string, object>> playerStates, EFT.Player player, PlayerReplicatedComponent prc)
         {
             Dictionary<string, object> dictPlayerState = new();
@@ -1282,17 +1111,17 @@ namespace SIT.Core.Coop
             //{
             //    prc.ReplicatedDirection = new Vector2(1, 0);
             //}
-            dictPlayerState.Add("tp", prc.TriggerPressed);
+            //dictPlayerState.Add("tp", prc.TriggerPressed);
             dictPlayerState.Add("alive", player.HealthController.IsAlive);
             dictPlayerState.Add("tilt", player.MovementContext.Tilt);
             dictPlayerState.Add("prn", player.MovementContext.IsInPronePose);
 
             dictPlayerState.Add("t", DateTime.Now.Ticks.ToString("G"));
             // ---------- 
-            dictPlayerState.Add("p.hs.c", player.Physical.HandsStamina.Current);
-            dictPlayerState.Add("p.hs.t", player.Physical.HandsStamina.TotalCapacity.Value);
-            dictPlayerState.Add("p.s.c", player.Physical.Stamina.Current);
-            dictPlayerState.Add("p.s.t", player.Physical.Stamina.TotalCapacity.Value);
+            //dictPlayerState.Add("p.hs.c", player.Physical.HandsStamina.Current);
+            //dictPlayerState.Add("p.hs.t", player.Physical.HandsStamina.TotalCapacity.Value);
+            //dictPlayerState.Add("p.s.c", player.Physical.Stamina.Current);
+            //dictPlayerState.Add("p.s.t", player.Physical.Stamina.TotalCapacity.Value);
             //
             if (prc.ReplicatedDirection.HasValue)
             {
@@ -1301,6 +1130,7 @@ namespace SIT.Core.Coop
             }
 
             // ---------- 
+            /*
             if (player.PlayerHealthController != null)
             {
                 foreach (var b in Enum.GetValues(typeof(EBodyPart)))
@@ -1319,9 +1149,23 @@ namespace SIT.Core.Coop
                 }
 
             }
+            */
             // ---------- 
+            if (player.HealthController.IsAlive)
+            {
+                foreach (EBodyPart bodyPart in Enum.GetValues(typeof(EBodyPart)))
+                {
+                    if (bodyPart == EBodyPart.Common)
+                        continue;
 
+                    var health = player.HealthController.GetBodyPartHealth(bodyPart);
+                    dictPlayerState.Add($"hp.{bodyPart}", health.Current);
+                    dictPlayerState.Add($"hp.{bodyPart}.m", health.Maximum);
+                }
 
+                dictPlayerState.Add("en", player.HealthController.Energy.Current);
+                dictPlayerState.Add("hy", player.HealthController.Hydration.Current);
+            }
             // ----------
             dictPlayerState.Add("m", "PlayerState");
 

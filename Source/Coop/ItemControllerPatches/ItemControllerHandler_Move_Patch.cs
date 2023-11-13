@@ -191,11 +191,14 @@ namespace SIT.Core.Coop.ItemControllerPatches
             // -----------------------------------------------------------------------------------
             // Destroy the Loose Item if it exists
             //
-            var lootItems = Singleton<GameWorld>.Instance.LootItems.Where(x => x.ItemId == itemId);
+            var world = Singleton<GameWorld>.Instance;
+            var lootItems = world.LootItems.Where(x => x.ItemId == itemId);
+
             if (lootItems.Any())
             {
-                foreach(var i in lootItems)
+                foreach (var i in lootItems)
                 {
+                    world.LootList.Remove(i);
                     i.Kill();
                 }
             }

@@ -78,6 +78,9 @@ namespace SIT.Core.Coop.Player.Health
 
         public override void Replicated(EFT.Player player, Dictionary<string, object> dict)
         {
+            if (!dict.ContainsKey("data"))
+                return;
+
             KillPacket killPacket = new KillPacket(player.ProfileId);
             killPacket.DeserializePacketSIT(dict["data"].ToString());
 

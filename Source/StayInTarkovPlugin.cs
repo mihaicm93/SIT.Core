@@ -263,6 +263,9 @@ namespace SIT.Core
                 //// --------- Progression -----------------------
                 EnableSPPatches_PlayerProgression();
 
+                ////--------- Trader ------------------
+                new PostRaidHealingPricePatch().Enable();
+
                 //// --------------------------------------
                 // Bots
                 EnableSPPatches_Bots(Config);

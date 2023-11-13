@@ -189,7 +189,10 @@ namespace SIT.Core.Coop
 
             //coopGameComponent = gameWorld.GetOrAddComponent<CoopGameComponent>();
             if (!string.IsNullOrEmpty(MatchmakerAcceptPatches.GetGroupId()))
+            {
                 coopGameComponent.ServerId = MatchmakerAcceptPatches.GetGroupId();
+                coopGameComponent.Timestamp = MatchmakerAcceptPatches.GetTimestamp();
+            }
             else
             {
                 GameObject.Destroy(coopGameComponent);

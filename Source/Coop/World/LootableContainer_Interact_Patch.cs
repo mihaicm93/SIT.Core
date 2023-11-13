@@ -55,9 +55,6 @@ namespace SIT.Core.Coop.World
                 { "type", interactionResult.InteractionType.ToString() }
             };
 
-            if (__instance.InteractingPlayer != null)
-                packet.Add("player", __instance.InteractingPlayer.ProfileId);
-
             AkiBackendCommunication.Instance.PostDownWebSocketImmediately(packet);
         }
 
@@ -92,25 +89,12 @@ namespace SIT.Core.Coop.World
                             break;
                     }
 
-                    EFT.Player player = null;
-                    if (packet.ContainsKey("player"))
-                    {
-                        player = Comfort.Common.Singleton<GameWorld>.Instance.GetAlivePlayerByProfileID(packet["player"].ToString());
-                        if (player != null)
-                        {
-                            if (!AkiBackendCommunication.Instance.HighPingMode && !player.IsYourPlayer)
-                            {
-                                if (SIT.Coop.Core.Matchmaker.MatchmakerAcceptPatches.IsClient || coopGameComponent.PlayerUsers.Contains(player))
-                                {
-                                    WorldInteractiveObject.InteractionParameters interactionParameters = lootableContainer.GetInteractionParameters(player.Transform.position);
-                                    player.SendHandsInteractionStateChanged(true, interactionParameters.AnimationId);
-                                    player.HandsController.Interact(true, interactionParameters.AnimationId);
-                                }
-                            }
-                        }
-                    }
+                    void Interact() => ReflectionHelpers.InvokeMethodForObject(lootableContainer, methodName);
 
-                    lootableContainer.StartBehaviourTimer(EFTHardSettings.Instance.DelayToOpenContainer, () => ReflectionHelpers.InvokeMethodForObject(lootableContainer, methodName));
+                    if (interactionType == EInteractionType.Unlock)
+                        Interact();
+                    else
+                        lootableContainer.StartBehaviourTimer(EFTHardSettings.Instance.DelayToOpenContainer, Interact);
                 }
                 else
                 {

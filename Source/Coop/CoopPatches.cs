@@ -83,17 +83,9 @@ namespace SIT.Core.Coop
             if (!NoMRPPatches.Any())
             {
                 NoMRPPatches.Add(new Player_Init_Coop_Patch(m_Config));
-
                 NoMRPPatches.Add(new WeaponSoundPlayer_FireSonicSound_Patch());
-
                 NoMRPPatches.Add(new ItemControllerHandler_Move_Patch());
-
-                NoMRPPatches.Add(new Door_Interact_Patch());
-                NoMRPPatches.Add(new KeycardDoor_Interact_Patch());
                 NoMRPPatches.Add(new LootableContainer_Interact_Patch());
-                NoMRPPatches.Add(new Switch_Interact_Patch());
-                NoMRPPatches.Add(new Trunk_Interact_Patch());
-                NoMRPPatches.Add(new WorldInteractiveObject_Interact_Patch());
             }
 
             //Logger.LogInfo($"{NoMRPPatches.Count()} Non-MR Patches found");

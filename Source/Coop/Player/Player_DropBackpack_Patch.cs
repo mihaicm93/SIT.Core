@@ -1,5 +1,6 @@
-﻿using SIT.Coop.Core.Web;
+﻿using EFT.InventoryLogic;
 using SIT.Core.Coop;
+using SIT.Core.Coop.Player;
 using SIT.Core.Misc;
 using SIT.Tarkov.Core;
 using System;
@@ -10,11 +11,9 @@ namespace SIT.Coop.Core.Player
 {
     internal class Player_DropBackpack_Patch : ModuleReplicationPatch
     {
-        public override Type InstanceType => typeof(EFT.LocalPlayer);
+        public override Type InstanceType => typeof(EFT.Player);
 
         public override string MethodName => "DropBackpack";
-
-        public static Dictionary<string, bool> CallLocally = new();
 
         protected override MethodBase GetTargetMethod()
         {
@@ -22,44 +21,56 @@ namespace SIT.Coop.Core.Player
             return method;
         }
 
-        [PatchPrefix]
-        public static bool PrePatch(EFT.Player __instance)
-        {
-            var result = false;
-            if (CallLocally.TryGetValue(__instance.Profile.AccountId, out var expecting) && expecting)
-                result = true;
-
-            Logger.LogDebug("Player_DropBackpack_Patch:PrePatch");
-
-            return result;
-        }
-
         [PatchPostfix]
-        public static void PatchPostfix(
-            EFT.Player __instance)
+        public static void PatchPostfix(EFT.Player __instance)
         {
-            if (CallLocally.TryGetValue(__instance.Profile.AccountId, out var expecting) && expecting)
+            Item backpack = __instance.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
+            if (backpack == null)
+                return;
+
+            EFT.Player.ItemHandsController itemHandsController = __instance.HandsController as EFT.Player.ItemHandsController;
+            if (itemHandsController != null && itemHandsController.CurrentCompassState)
             {
-                CallLocally.Remove(__instance.Profile.AccountId);
+                itemHandsController.SetCompassState(false);
                 return;
             }
 
-            Dictionary<string, object> dictionary = new()
+            if (!ItemFinder.TryFindItemController(__instance.ProfileId, out ItemController itemController))
+                return;
+
+            if (__instance.MovementContext.StationaryWeapon != null)
+                return;
+
+            if (!itemController.CanThrow(backpack))
+                return;
+
+            if (__instance.HandsController.IsPlacingBeacon())
+                return;
+
+            if (__instance.HandsController.IsInInteractionStrictCheck())
+                return;
+
+            if (__instance.CurrentStateName == EPlayerState.BreachDoor)
+                return;
+
+            if (__instance.IsSprintEnabled)
+                return;
+
+            EFT.Player.PlayerInventoryController playerInventoryController = itemController as EFT.Player.PlayerInventoryController;
+            if (playerInventoryController == null)
             {
-                { "t", DateTime.Now.Ticks.ToString("G") },
-                { "m", "DropBackpack" }
-            };
-            AkiBackendCommunicationCoop.PostLocalPlayerData(__instance, dictionary);
+                playerInventoryController = new(__instance, __instance.Profile, false);
+                playerInventoryController.ResetDiscardLimits();
+            }
+
+            if (PlayerInventoryController_ThrowItem_Patch.CallLocally.Contains(__instance.ProfileId))
+                PlayerInventoryController_ThrowItem_Patch.CallLocally.Remove(__instance.ProfileId);
+
+            PlayerInventoryController_ThrowItem_Patch.PostPatch(playerInventoryController, backpack, __instance.Profile);
         }
 
         public override void Replicated(EFT.Player player, Dictionary<string, object> dict)
         {
-            if (HasProcessed(GetType(), player, dict))
-                return;
-
-            CallLocally.Add(player.Profile.AccountId, true);
-            Logger.LogDebug("Replicated: Calling Drop Backpack");
-            player.DropBackpack();
         }
     }
 }

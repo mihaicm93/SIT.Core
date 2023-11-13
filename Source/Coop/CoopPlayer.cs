@@ -214,6 +214,37 @@ namespace SIT.Core.Coop
             var damageInfo = Player_ApplyShot_Patch.BuildDamageInfoFromPacket(dict);
             damageInfo.HitCollider = Player_ApplyShot_Patch.GetCollider(this, damageInfo.BodyPartColliderType);
 
+            if (damageInfo.DamageType == EDamageType.Bullet && IsYourPlayer)
+            {
+                float handsShake = 0.05f;
+                float cameraShake = 0.4f;
+                float absorbedDamage = absorbed + damageInfo.Damage;
+
+                switch (bodyPartType)
+                {
+                    case EBodyPart.Head:
+                        handsShake = 0.1f;
+                        cameraShake = 1.3f;
+                        break;
+                    case EBodyPart.LeftArm:
+                    case EBodyPart.RightArm:
+                        handsShake = 0.15f;
+                        cameraShake = 0.5f;
+                        break;
+                    case EBodyPart.LeftLeg:
+                    case EBodyPart.RightLeg:
+                        cameraShake = 0.3f;
+                        break;
+                }
+
+                ProceduralWeaponAnimation.ForceReact.AddForce(Mathf.Sqrt(absorbedDamage) / 10, handsShake, cameraShake);
+                if (FPSCamera.Instance.EffectsController.TryGetComponent(out FastBlur fastBlur))
+                {
+                    fastBlur.enabled = true;
+                    fastBlur.Hit(MovementContext.PhysicalConditionIs(EPhysicalCondition.OnPainkillers) ? absorbedDamage : (bodyPartType == EBodyPart.Head ? absorbedDamage * 6 : absorbedDamage * 3));
+                }
+            }
+
             base.ApplyDamageInfo(damageInfo, bodyPartType, absorbed, headSegment);
             //base.ShotReactions(damageInfo, bodyPartType);
 

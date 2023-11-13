@@ -164,41 +164,16 @@ namespace SIT.Core.Coop.Components
             if (!packet.ContainsKey("m"))
                 return;
 
+            string method = packet["m"].ToString();
+
             foreach (var coopPatch in CoopPatches.NoMRPPatches)
-            {
-                var imrwp = coopPatch as IModuleReplicationWorldPatch;
-                if (imrwp != null)
-                {
-                    if (imrwp.MethodName == packet["m"].ToString())
-                    {
+                if (coopPatch is IModuleReplicationWorldPatch imrwp)
+                    if (imrwp.MethodName == method)
                         imrwp.Replicated(ref packet);
-                    }
-                }
-            }
 
-            switch (packet["m"].ToString())
-            {
-                case "Door_Interact":
-                    Door_Interact_Patch.Replicated(packet);
-                    break;
-                case "KeycardDoor_Interact":
-                    KeycardDoor_Interact_Patch.Replicated(packet);
-                    break;
-                case "LootableContainer_Interact":
-                    LootableContainer_Interact_Patch.Replicated(packet);
-                    break;
-                case "Switch_Interact":
-                    Switch_Interact_Patch.Replicated(packet);
-                    break;
-                case "Trunk_Interact":
-                    Trunk_Interact_Patch.Replicated(packet);
-                    break;
-                case "WorldInteractiveObject_Interact":
-                    WorldInteractiveObject_Interact_Patch.Replicated(packet);
-                    break;
-            }
+            if (method == "LootableContainer_Interact")
+                LootableContainer_Interact_Patch.Replicated(packet);
         }
-
 
         bool ProcessPlayerPacket(Dictionary<string, object> packet)
         {
