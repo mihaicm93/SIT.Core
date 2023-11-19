@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace SIT.Core.Core.FileChecker
 {
+    /// <summary>
+    /// SIT - RunFilesCheckingPatch
+    /// </summary>
     internal class RunFilesCheckingPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -24,7 +27,7 @@ namespace SIT.Core.Core.FileChecker
             Task __result
             )
         {
-            await Task.Delay(1);
+            await Task.Yield();
             __result = Task.CompletedTask;
         }
     }

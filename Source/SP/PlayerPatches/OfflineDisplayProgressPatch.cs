@@ -6,12 +6,11 @@ using System.Reflection;
 
 namespace SIT.Core.SP.PlayerPatches
 {
-    // Not Used, can be removed? - slejm
     internal class OfflineDisplayProgressPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            foreach (var method in ReflectionHelpers.GetAllMethodsForType(PatchConstants.EftTypes.Single(x => x.Name == "MainApplication")))
+            foreach (var method in ReflectionHelpers.GetAllMethodsForType(PatchConstants.EftTypes.Single(x => x == typeof(TarkovApplication))))
             {
                 if (method.Name.StartsWith("method") &&
                     method.GetParameters().Length >= 5 &&
@@ -36,7 +35,7 @@ namespace SIT.Core.SP.PlayerPatches
             ref RaidSettings ____raidSettings
             )
         {
-            ____raidSettings.RaidMode = ERaidMode.Online;
+            ____raidSettings.RaidMode = ERaidMode.Local;
             return true;
         }
 
@@ -45,7 +44,7 @@ namespace SIT.Core.SP.PlayerPatches
             ref RaidSettings ____raidSettings
             )
         {
-            ____raidSettings.RaidMode = ERaidMode.Online;
+            ____raidSettings.RaidMode = ERaidMode.Local;
         }
     }
 }

@@ -98,8 +98,8 @@ namespace SIT.Core.Misc
 
         public static void Collect(int generation, GCCollectionMode gcMode, bool isBlocking, bool compacting, bool force)
         {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+            //GC.Collect();
+            //GC.WaitForPendingFinalizers();
             GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
             GC.Collect(generation, gcMode, isBlocking, compacting);
         }

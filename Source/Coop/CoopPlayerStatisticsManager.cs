@@ -19,10 +19,7 @@ namespace SIT.Core.Coop
 
         protected override void ShowStatNotification(LocalizationKey localizationKey1, LocalizationKey localizationKey2, int value)
         {
-            if (value > 0)
-            {
-                //NotificationManagerClass.DisplayNotification(new GClass1905(localizationKey1, localizationKey2, value));
-            }
+            
         }
     }
 }

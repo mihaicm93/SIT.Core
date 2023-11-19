@@ -9,6 +9,9 @@ using System.Reflection;
 
 namespace SIT.Core.SP.PlayerPatches.Health
 {
+    /// <summary>
+    /// SIT OnDead Patch to record deaths during the RAID
+    /// </summary>
     public class OnDeadPatch : ModulePatch
     {
         public static event Action<Player, EDamageType> OnPersonKilled;

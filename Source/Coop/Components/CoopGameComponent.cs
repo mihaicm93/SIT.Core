@@ -212,10 +212,6 @@ namespace SIT.Core.Coop
             //PatchConstants.Logger.LogDebug($"Found {ListOfInteractiveObjects.Length} interactive objects");
 
             CoopPatches.EnableDisablePatches();
-            //GCHelpers.EnableGC();
-            //GCHelpers.DisableGC();
-
-
 
             Player_Init_Coop_Patch.SendPlayerDataToServer((LocalPlayer)Singleton<GameWorld>.Instance.RegisteredPlayers.First(x => x.IsYourPlayer));
 
@@ -232,6 +228,7 @@ namespace SIT.Core.Coop
                 return;
 
             int counter = 0;
+            int maxMoveCounter = 60;
             await Task.Run(async () =>
             {
                 do
@@ -239,15 +236,24 @@ namespace SIT.Core.Coop
                     await Task.Delay(1000);
 
                     counter++;
-                    if (counter == (60 * 5))
+
+                    var myPlayer = Singleton<GameWorld>.Instance.MainPlayer;
+                    if ((myPlayer != null && (myPlayer.HealthController.IsAlive && !myPlayer.Velocity.Equals(Vector3.zero))) && maxMoveCounter > 0)
+                    {
+                        maxMoveCounter--;
+                        continue;
+                    }
+
+                    if (counter == (60 * PluginConfigSettings.Instance.AdvancedSettings.SITGarbageCollectorIntervalMinutes))
                     {
                         GCHelpers.EnableGC();
                     }
 
-                    if (counter == (61 * 5))
+                    if (counter == (61 * PluginConfigSettings.Instance.AdvancedSettings.SITGarbageCollectorIntervalMinutes))
                     {
                         GCHelpers.DisableGC(true);
                         counter = 0;
+                        maxMoveCounter = 60;
                     }
 
                 } while (RunAsyncTasks && PluginConfigSettings.Instance.AdvancedSettings.UseSITGarbageCollector);

@@ -12,5 +12,6 @@
   "NUMBER_OF_PLAYERS_TO_WAIT_FOR_MESSAGE": "需要等待玩家的數量（包括你自己！）",
   "REQUIRE_PASSWORD": "需要密碼認證",
   "PASSWORD": "Password",
-  "AI_AMOUNT": "AI Amount"
+  "AI_AMOUNT": "AI Amount",
+  "ILLEGAL_MESSAGE": "Illegal game found. Please buy, install the game and launch at least once."
 }

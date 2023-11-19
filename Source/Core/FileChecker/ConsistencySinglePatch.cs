@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 
 namespace SIT.Tarkov.Core
 {
+    /// <summary>
+    /// SPT-Aki ConsistencySinglePatch - https://dev.sp-tarkov.com/SPT-AKI/Modules/src/branch/master/project/Aki.Core/Patches/ConsistencySinglePatch.cs
+    /// </summary>
     public class ConsistencySinglePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()

@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -93,7 +94,12 @@ namespace SIT.Core.Coop.Components
                 while (ActionPackets.TryTake(out var result))
                 {
                     Stopwatch stopwatchActionPacket = Stopwatch.StartNew();
-                    ProcessLastActionDataPacket(result);
+                    if (!ProcessLastActionDataPacket(result))
+                    {
+                        //ActionPackets.Add(result);
+                        continue;
+                    }
+
                     if (stopwatchActionPacket.ElapsedMilliseconds > 1)
                         Logger.LogDebug($"ActionPacket {result["m"]} took {stopwatchActionPacket.ElapsedMilliseconds}ms to process!");
                 }
@@ -106,7 +112,11 @@ namespace SIT.Core.Coop.Components
                 Stopwatch stopwatchActionPacketsMovement = Stopwatch.StartNew();
                 while (ActionPacketsMovement.TryTake(out var result))
                 {
-                    ProcessLastActionDataPacket(result);
+                    if (!ProcessLastActionDataPacket(result))
+                    {
+                        //ActionPacketsMovement.Add(result);
+                        continue;
+                    }
                 }
                 if(stopwatchActionPacketsMovement.ElapsedMilliseconds > 1)
                 {
@@ -120,10 +130,21 @@ namespace SIT.Core.Coop.Components
                 Stopwatch stopwatchActionPacketsDamage = Stopwatch.StartNew();
                 while (ActionPacketsDamage.TryTake(out var packet))
                 {
+                    if (!packet.ContainsKey("profileId"))
+                        continue;
+
                     var profileId = packet["profileId"].ToString();
+
+                    // The person is missing. Lets add this back until they exist
+                    if (!CoopGameComponent.Players.ContainsKey(profileId))
+                    {
+                        //ActionPacketsDamage.Add(packet);
+                        continue;
+                    }
+
                     var playerKVP = CoopGameComponent.Players[profileId];
                     if (playerKVP == null)
-                        return;
+                        continue;
 
                     var coopPlayer = (CoopPlayer)playerKVP;
                     coopPlayer.ReceiveDamageFromServer(packet);
@@ -138,48 +159,59 @@ namespace SIT.Core.Coop.Components
             return;
         }
 
-        void ProcessLastActionDataPacket(Dictionary<string, object> packet)
+        bool ProcessLastActionDataPacket(Dictionary<string, object> packet)
         {
             if (Singleton<GameWorld>.Instance == null)
-                return;
+                return false;
 
             if (packet == null || packet.Count == 0)
             {
                 Logger.LogInfo("No Data Returned from Last Actions!");
-                return;
+                return false;
             }
 
-            if (!ProcessPlayerPacket(packet))
-            {
-                ProcessWorldPacket(ref packet);
-            }
+            bool result = ProcessPlayerPacket(packet);
+            if(!result)
+                result = ProcessWorldPacket(ref packet);
 
+            return result;
         }
 
-        void ProcessWorldPacket(ref Dictionary<string, object> packet)
+        bool ProcessWorldPacket(ref Dictionary<string, object> packet)
         {
+            // this isn't a world packet. return true
             if (packet.ContainsKey("profileId"))
-                return;
+                return true;
 
+            // this isn't a world packet. return true
             if (!packet.ContainsKey("m"))
-                return;
+                return true;
 
+            var result = false;
             string method = packet["m"].ToString();
 
             foreach (var coopPatch in CoopPatches.NoMRPPatches)
                 if (coopPatch is IModuleReplicationWorldPatch imrwp)
                     if (imrwp.MethodName == method)
+                    {
                         imrwp.Replicated(ref packet);
+                        result = true;
+                    }
 
             if (method == "LootableContainer_Interact")
+            {
                 LootableContainer_Interact_Patch.Replicated(packet);
+                result = true;
+            }
+
+            return result;
         }
 
         bool ProcessPlayerPacket(Dictionary<string, object> packet)
         {
 
             if (packet == null)
-                return false;
+                return true;
 
             if (!packet.ContainsKey("profileId"))
                 return false;

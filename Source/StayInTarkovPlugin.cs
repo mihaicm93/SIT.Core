@@ -55,12 +55,13 @@ namespace SIT.Core
 
         public static Dictionary<string, string> LanguageDictionary { get; } = new Dictionary<string, string>();    
 
+        public static bool LanguageDictionaryLoaded { get; private set; }
+
         private void Awake()
         {
             Instance = this;
             Settings = new PluginConfigSettings(Logger, Config);
             LogDependancyErrors();
-
 
             // Gather the Major/Minor numbers of EFT ASAP
             new VersionLabelPatch(Config).Enable();
@@ -75,6 +76,20 @@ namespace SIT.Core
 
             Logger.LogInfo($"Stay in Tarkov is loaded!");
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
+        }
+
+        private bool shownCheckError = false;
+
+        void Update()
+        {
+            if (!LegalGameCheck.Checked) 
+                LegalGameCheck.LegalityCheck(Config);
+
+            if (Singleton<PreloaderUI>.Instantiated && !shownCheckError && !LegalGameCheck.LegalGameFound)
+            {
+                shownCheckError = true;
+                Singleton<PreloaderUI>.Instance.ShowCriticalErrorScreen("", LegalGameCheck.IllegalMessage, ErrorScreen.EButtonType.QuitButton, 60, () => { Application.Quit(); }, () => { Application.Quit(); });
+            }
         }
 
         private void ReadInLanguageDictionary()
@@ -156,6 +171,8 @@ namespace SIT.Core
 
             Logger.LogDebug("Loaded in the following Language Dictionary");
             Logger.LogDebug(LanguageDictionary.ToJson());
+
+            LanguageDictionaryLoaded = true;
         }
 
         private IEnumerator VersionChecks()
@@ -197,13 +214,6 @@ namespace SIT.Core
             Logger.LogInfo($"{nameof(EnableCorePatches)}");
             try
             {
-                // SIT Legal Game Checker
-                var lcRemover = Config.Bind<bool>("Debug Settings", "LC Remover", false).Value;
-                if (!lcRemover)
-                {
-                    LegalGameCheck.LegalityCheck();
-                }
-
                 // File Checker
                 new ConsistencySinglePatch().Enable();
                 new ConsistencyMultiPatch().Enable();
@@ -225,7 +235,6 @@ namespace SIT.Core
                     new WebSocketPatch().Enable();
                 }
 
-                //new TarkovTransportHttpMethodDebugPatch2().Enable();
             }
             catch (Exception e)
             {
@@ -252,7 +261,7 @@ namespace SIT.Core
                 EnableSPPatches_PlayerHealth(Config);
 
                 //// --------- SCAV MODE ---------------------
-                new DisableScavModePatch().Enable();
+                new RemoveScavModeButtonPatch().Enable();
 
                 //// --------- Airdrop -----------------------
                 //new AirdropPatch().Enable();
@@ -287,8 +296,6 @@ namespace SIT.Core
                     Logger.LogError("// --- ERROR -----------------------------------------------");
                 }
 
-                new WavesSpawnScenarioInitPatch(Config).Enable();
-                new WavesSpawnScenarioMethodPatch().Enable();
             }
             catch(Exception ex)
             {
@@ -317,6 +324,7 @@ namespace SIT.Core
 
         private static void EnableSPPatches_PlayerProgression()
         {
+            new OfflineDisplayProgressPatch().Enable();
             new OfflineSaveProfile().Enable();
             new ExperienceGainPatch().Enable();
         }

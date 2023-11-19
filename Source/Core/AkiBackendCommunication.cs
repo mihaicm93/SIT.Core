@@ -73,7 +73,7 @@ namespace SIT.Core.Core
 
         protected ManualLogSource Logger;
 
-        static WebSocketSharp.WebSocket WebSocket { get; set; }
+        WebSocketSharp.WebSocket WebSocket { get; set; }
 
         public static int PING_LIMIT_HIGH { get; } = 125;
         public static int PING_LIMIT_MID { get; }  = 100;
@@ -118,18 +118,18 @@ namespace SIT.Core.Core
 
         private Profile MyProfile { get; set; }
 
-        private HashSet<string> WebSocketPreviousReceived { get; set; }
+        //private HashSet<string> WebSocketPreviousReceived { get; set; }
 
         public void WebSocketCreate(Profile profile)
         {
             MyProfile = profile;
 
             Logger.LogDebug("WebSocketCreate");
-            if (WebSocket != null && WebSocket.ReadyState != WebSocketSharp.WebSocketState.Closed)
-            {
-                Logger.LogDebug("WebSocketCreate:WebSocket already exits");
-                return;
-            }
+            //if (WebSocket != null && WebSocket.ReadyState != WebSocketSharp.WebSocketState.Closed)
+            //{
+            //    Logger.LogDebug("WebSocketCreate:WebSocket already exits");
+            //    return;
+            //}
 
             Logger.LogDebug("Request Instance is connecting to WebSocket");
 
@@ -139,7 +139,7 @@ namespace SIT.Core.Core
             Logger.LogDebug(PatchConstants.GetREALWSURL());
             Logger.LogDebug(wsUrl);
 
-            WebSocketPreviousReceived = new HashSet<string>();
+            //WebSocketPreviousReceived = new HashSet<string>();
             WebSocket = new WebSocketSharp.WebSocket(wsUrl);
             WebSocket.WaitTime = TimeSpan.FromMinutes(1);
             WebSocket.EmitOnPing = true;    
@@ -151,17 +151,6 @@ namespace SIT.Core.Core
             WebSocket.OnMessage += WebSocket_OnMessage;
             // ---
 
-            // Continously Ping from SIT.Core (Keep Alive)
-            //_ = Task.Run(async () =>
-            //{
-
-            //    while (WebSocket != null)
-            //    {
-            //        //WebSocket.Send((new { RandomPing = 0 }).ToJson());
-            //        await Task.Delay(1000);
-            //    }
-
-            //});
         }
 
         public void WebSocketClose()
@@ -219,6 +208,7 @@ namespace SIT.Core.Core
 
         private void WebSocket_OnMessage(object sender, WebSocketSharp.MessageEventArgs e)
         {
+            GC.AddMemoryPressure(e.RawData.Length);
             try
             {
                 //Logger.LogInfo($"Step.0. WebSocket_OnMessage");
@@ -246,10 +236,10 @@ namespace SIT.Core.Core
                     return;
 
 
-                if (WebSocketPreviousReceived.Contains(e.Data))
-                    return;
+                //if (WebSocketPreviousReceived.Contains(e.Data))
+                //    return;
 
-                WebSocketPreviousReceived.Add(e.Data);
+                //WebSocketPreviousReceived.Add(e.Data);
 
                 if (DEBUGPACKETS)
                 {

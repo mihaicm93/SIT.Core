@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SIT.Core", "Source\SIT.Core
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFiles", "SolutionFiles", "{5FB59896-3353-49B8-9F79-B908539EAF92}"
 	ProjectSection(SolutionItems) = preProject
+		.github\ReleaseNotes.txt = .github\ReleaseNotes.txt
 		COMPILE.md = COMPILE.md
 		LICENSE.md = LICENSE.md
 		README.md = README.md

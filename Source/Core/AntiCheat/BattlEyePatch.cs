@@ -5,6 +5,10 @@ using System.Threading.Tasks;
 
 namespace SIT.Tarkov.Core
 {
+
+    /// <summary>
+    /// BattlEyePatch from SPT-Aki https://dev.sp-tarkov.com/SPT-AKI/Modules/src/branch/master/project/Aki.Core/Patches/BattlEyePatch.cs
+    /// </summary>
     public class BattlEyePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -25,6 +29,10 @@ namespace SIT.Tarkov.Core
         }
     }
 
+
+    /// <summary>
+    /// SIT - A patch to remove FirstPassRun
+    /// </summary>
     public class BattlEyePatchFirstPassRun : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -39,6 +47,9 @@ namespace SIT.Tarkov.Core
         }
     }
 
+    /// <summary>
+    /// SIT - A patch to remove FirstPassUpdate
+    /// </summary>
     public class BattlEyePatchFirstPassUpdate : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -53,6 +64,9 @@ namespace SIT.Tarkov.Core
         }
     }
 
+    /// <summary>
+    /// SIT - A patch to test FirstPassReceivedPacket
+    /// </summary>
     public class BattlEyePatchFirstPassReceivedPacket : ModulePatch
     {
         protected override MethodBase GetTargetMethod()

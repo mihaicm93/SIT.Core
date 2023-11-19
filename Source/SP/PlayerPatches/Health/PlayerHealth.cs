@@ -2,6 +2,9 @@
 
 namespace SIT.Core.SP.PlayerPatches.Health
 {
+    /// <summary>
+    /// SPT-Aki PlayerHealth - https://dev.sp-tarkov.com/SPT-AKI/Modules/src/branch/master/project/Aki.SinglePlayer/Models/Healing/PlayerHealth.cs
+    /// </summary>
     public class PlayerHealth
     {
         private readonly Dictionary<EBodyPart, BodyPartHealth> _health = new()

@@ -15,8 +15,8 @@ namespace SIT.Core.SP.Raid
             var desiredType = typeof(SessionResultExperienceCount);
             var desiredMethod = ReflectionHelpers.GetAllMethodsForType(desiredType).FirstOrDefault(IsTargetMethod);
 
-            Logger.LogDebug($"{this.GetType().Name} Type: {desiredType?.Name}");
-            Logger.LogDebug($"{this.GetType().Name} Method: {desiredMethod?.Name}");
+            //Logger.LogDebug($"{this.GetType().Name} Type: {desiredType?.Name}");
+            //Logger.LogDebug($"{this.GetType().Name} Method: {desiredMethod?.Name}");
 
             return desiredMethod;
         }
@@ -35,7 +35,7 @@ namespace SIT.Core.SP.Raid
         private static void PatchPrefix(ref Profile profile, ref bool isOnline)
         {
             Logger.LogInfo("PatchPrefix");
-            profile = CoopPlayerStatisticsManager.Profile;
+            //profile = CoopPlayerStatisticsManager.Profile;
             isOnline = true;
         }
 

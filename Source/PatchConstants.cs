@@ -18,7 +18,7 @@ namespace SIT.Tarkov.Core
 {
     public static class PatchConstants
     {
-        public static BindingFlags PrivateFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+        public static BindingFlags PrivateFlags { get; } = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
 
         private static Type[] _eftTypes;
         public static Type[] EftTypes
@@ -33,41 +33,13 @@ namespace SIT.Tarkov.Core
                 return _eftTypes;
             }
         }
+
         public static Type[] FilesCheckerTypes { get; private set; }
-        public static Type LocalGameType { get; private set; }
-        public static Type ExfilPointManagerType { get; private set; }
-        public static Type BackendInterfaceType { get; private set; }
-        public static Type SessionInterfaceType { get; private set; }
-
-        public static Type StartWithTokenType { get; private set; }
-
-        public static Type PoolManagerType { get; set; }
-
-        public static Type JobPriorityType { get; set; }
-
-        //public static Type PlayerInfoType { get; set; }
-        //public static Type PlayerCustomizationType { get; set; }
-
-        //public static Type SpawnPointSystemInterfaceType { get; set; }
-        //public static Type SpawnPointArrayInterfaceType { get; set; }
-        //public static Type SpawnPointSystemClassType { get; set; }
-
-        //public static Type BackendStaticConfigurationType { get; set; }
-        public static object BackendStaticConfigurationConfigInstance { get; set; }
-
-        //public static class CharacterControllerSettings
-        //{
-        //    public static object CharacterControllerInstance { get; set; }
-        //    public static CharacterControllerSpawner.Mode ObservedPlayerMode { get; set; }
-        //    public static CharacterControllerSpawner.Mode ClientPlayerMode { get; set; }
-        //    public static CharacterControllerSpawner.Mode BotPlayerMode { get; set; }
-        //}
-
 
         /// <summary>
         /// A Key/Value dictionary of storing & obtaining an array of types by name
         /// </summary>
-        public static readonly Dictionary<string, Type[]> TypesDictionary = new();
+        public static Dictionary<string, Type[]> TypesDictionary { get; } = new();
 
         /// <summary>
         /// A Key/Value dictionary of storing & obtaining a type by name
@@ -79,12 +51,12 @@ namespace SIT.Tarkov.Core
         /// </summary>
         public static readonly Dictionary<(Type, string), MethodInfo> MethodDictionary = new();
 
-        private static string backendUrl;
+        private static string backendUrl { get; set; }
+
         /// <summary>
         /// Method that returns the Backend Url (Example: https://127.0.0.1)
         /// </summary>
-        private static string RealWSURL;    //did i do this right?
-        //It appears to be successful :D
+        private static string RealWSURL;   
         public static string GetBackendUrl()
         {
             if (string.IsNullOrEmpty(backendUrl))
@@ -115,11 +87,8 @@ namespace SIT.Tarkov.Core
             return BackendConnection.GetBackendConnection().PHPSESSID;
         }
 
-
-
         public static ManualLogSource Logger { get; private set; }
 
-        //public static Type GroupingType { get; }
         public static Type JsonConverterType { get; }
         public static Newtonsoft.Json.JsonConverter[] JsonConverterDefault { get; }
 
@@ -141,10 +110,6 @@ namespace SIT.Tarkov.Core
                 return _backEndSession;
             }
         }
-
-
-
-
 
         public static Newtonsoft.Json.JsonConverter[] GetJsonConvertersBSG()
         {
@@ -256,52 +221,6 @@ namespace SIT.Tarkov.Core
             }
         }
 
-        public static object GetPlayerProfile(object __instance)
-        {
-            var instanceProfile = __instance.GetType().GetProperty("Profile"
-                , BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).GetValue(__instance);
-            if (instanceProfile == null)
-            {
-                Logger.LogInfo("ReplaceInPlayer:PatchPostfix: Couldn't find Profile");
-                return null;
-            }
-            return instanceProfile;
-        }
-
-        public static string GetPlayerProfileAccountId(object instanceProfile)
-        {
-            var instanceAccountProp = instanceProfile.GetType().GetField("AccountId"
-                , BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-
-            if (instanceAccountProp == null)
-            {
-                Logger.LogInfo($"ReplaceInPlayer:PatchPostfix: instanceAccountProp not found");
-                return null;
-            }
-            var instanceAccountId = instanceAccountProp.GetValue(instanceProfile).ToString();
-            return instanceAccountId;
-        }
-
-        public static IDisposable StartWithToken(string name)
-        {
-            return ReflectionHelpers.GetAllMethodsForType(StartWithTokenType).Single(x => x.Name == "StartWithToken").Invoke(null, new object[] { name }) as IDisposable;
-        }
-
-        public static async Task InvokeAsyncStaticByReflection(MethodInfo methodInfo, object rModel, params object[] p)
-        {
-            if (rModel == null)
-            {
-                await (Task)methodInfo
-                    .MakeGenericMethod(new[] { rModel.GetType() })
-                    .Invoke(null, p);
-            }
-            else
-            {
-                await (Task)methodInfo
-                    .Invoke(null, p);
-            }
-        }
-
         public static ClientApplication<ISession> GetClientApp()
         {
             return Singleton<ClientApplication<ISession>>.Instance;
@@ -312,31 +231,6 @@ namespace SIT.Tarkov.Core
             return GetClientApp() as TarkovApplication;
         }
 
-        /// <summary>
-        /// Invoke an async Task<object> method
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="outputType"></param>
-        /// <param name="method"></param>
-        /// <param name="param"></param>
-        /// <returns></returns>
-        //public static async Task<object> InvokeAsyncMethod(Type type, Type outputType, string method, object[] param)
-        //{
-        //    var m = ReflectionHelpers.GetAllMethodsForType(type).First(x => x.Name == method);// foo.GetType().GetMethod(nameof(IFoo.Get));
-        //    Logger.LogInfo("InvokeAsyncMethod." + m.Name);
-
-        //    //var builder = AsyncTaskMethodBuilder.Create();
-
-        //    var generic = m.MakeGenericMethod(outputType);
-        //    var task = (Task)generic.Invoke(type, param);
-
-        //    await task.ConfigureAwait(false);
-
-        //    var resultProperty = task.GetType().GetProperty("Result");
-        //    return resultProperty.GetValue(task);
-
-        //}
-
         static PatchConstants()
         {
             if (Logger == null)
@@ -346,73 +240,13 @@ namespace SIT.Tarkov.Core
             Logger.LogInfo($"PatchConstants: {EftTypes.Length} EftTypes found");
 
             FilesCheckerTypes = typeof(ICheckResult).Assembly.GetTypes();
-            LocalGameType = EftTypes.Single(x => x.Name == "LocalGame");
-            ExfilPointManagerType = EftTypes.Single(x => x.GetMethod("InitAllExfiltrationPoints") != null);
-            BackendInterfaceType = EftTypes.Single(x => x.GetMethods().Select(y => y.Name).Contains("CreateClientSession") && x.IsInterface);
-            SessionInterfaceType = EftTypes.Single(x => x.GetMethods().Select(y => y.Name).Contains("GetPhpSessionId") && x.IsInterface);
             DisplayMessageNotifications.MessageNotificationType = EftTypes.Single(x => x.GetMethods(BindingFlags.Static | BindingFlags.Public).Select(y => y.Name).Contains("DisplayMessageNotification"));
-            //if (DisplayMessageNotifications.MessageNotificationType == null)
-            //{
-            //    Logger.LogInfo("SIT.Tarkov.Core:PatchConstants():MessageNotificationType:Not Found");
-            //}
-            //GroupingType = EftTypes.Single(x => x.GetMethods(BindingFlags.Public | BindingFlags.Static).Select(y => y.Name).Contains("CreateRaidPlayer"));
-            //if (GroupingType != null)
-            //{
-            //  Logger.LogInfo("SIT.Tarkov.Core:PatchConstants():Found GroupingType:" + GroupingType.FullName);
-            //}
-
+          
             JsonConverterType = typeof(AbstractGame).Assembly.GetTypes()
                .First(t => t.GetField("Converters", BindingFlags.Static | BindingFlags.Public) != null);
             JsonConverterDefault = JsonConverterType.GetField("Converters", BindingFlags.Static | BindingFlags.Public).GetValue(null) as JsonConverter[];
             Logger.LogInfo($"PatchConstants: {JsonConverterDefault.Length} JsonConverters found");
 
-            StartWithTokenType = EftTypes.Single(x => ReflectionHelpers.GetAllMethodsForType(x).Count(y => y.Name == "StartWithToken") == 1);
-
-            //BotSystemHelpers.Setup();
-
-            if (JobPriorityType == null)
-            {
-                JobPriorityType = EftTypes.Single(x =>
-                    ReflectionHelpers.GetAllMethodsForType(x).Any(x => x.Name == "Priority")
-                    );
-                //Logger.LogInfo($"Loading JobPriorityType:{JobPriorityType.FullName}");
-            }
-
-            //if (PlayerInfoType == null)
-            //{
-            //    PlayerInfoType = EftTypes.Single(x =>
-            //        ReflectionHelpers.GetAllMethodsForType(x).Any(x => x.Name == "AddBan")
-            //        && ReflectionHelpers.GetAllMethodsForType(x).Any(x => x.Name == "RemoveBan")
-            //        );
-            //    //Logger.LogInfo($"Loading PlayerInfoType:{PlayerInfoType.FullName}");
-            //}
-
-            //if (PlayerCustomizationType == null)
-            //{
-            //    PlayerCustomizationType = ReflectionHelpers.GetFieldFromType(typeof(Profile), "Customization").FieldType;
-            //    //Logger.LogInfo($"Loading PlayerCustomizationType:{PlayerCustomizationType.FullName}");
-            //}
-
-            //SpawnPointArrayInterfaceType = EftTypes.Single(x =>
-            //            ReflectionHelpers.GetAllMethodsForType(x).Any(x => x.Name == "CreateSpawnPoint")
-            //            && ReflectionHelpers.GetAllMethodsForType(x).Any(x => x.Name == "DestroySpawnPoint")
-            //            && x.IsInterface
-            //        );
-            //Logger.LogDebug($"Loading SpawnPointArrayInterfaceType:{SpawnPointArrayInterfaceType.FullName}");
-
-            //BackendStaticConfigurationType = EftTypes.Single(x =>
-            //        ReflectionHelpers.GetAllMethodsForType(x).Any(x => x.Name == "LoadApplicationConfig")
-            //);
-
-
-            // ==================== TEST ==========================
-            // TODO: Replace with Unit Tests
-            //Profile profile = new Profile();
-            //profile.Info = new ProfileInfo() { Experience = 1 };
-            //var pJson = profile.SITToJson();
-            //Logger.LogDebug( pJson );
-            //var pProfile = pJson.SITParseJson<Profile>();
-            //Assert.AreEqual<Profile>(profile, pProfile);
         }
     }
 }
